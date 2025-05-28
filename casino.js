@@ -1,383 +1,278 @@
-// Casino Game Logic
-let balance = 10000;
-let currentGame = null;
-let currentBet = null;
+// Logika kasyna
+let stanKonta = 10000;
+let aktualnaGra = null;
+let aktualnaStawka = null;
 
-// Slot Machine Variables
-const slotSymbols = ['🍒', '🍋', '🍊', '🍇', '🔔', '💎', '7️⃣'];
+// Zmienne automatów
+const symboleAutomatow = ['🍒', '🍋', '🍊', '🍇', '🔔', '💎', '7️⃣'];
 
-// Blackjack Variables
-let deck = [];
-let playerHand = [];
-let dealerHand = [];
-let gameInProgress = false;
+// Zmienne blackjacka
+let talia = [];
+let kartyGracza = [];
+let kartyKrupiera = [];
+let graWToku = false;
 
-// Roulette Variables
-let rouletteBet = null;
-const redNumbers = [1, 3, 5, 7, 9, 12, 14, 16, 18, 19, 21, 23, 25, 27, 30, 32, 34, 36];
-
-// Utility Functions
-function updateBalance(amount) {
-  balance += amount;
-  document.getElementById('balance').textContent = balance.toLocaleString();
+// Funkcje pomocnicze
+function aktualizujStanKonta(kwota) {
+  stanKonta += kwota;
+  document.getElementById('stan-konta').textContent = stanKonta.toLocaleString();
   
-  if (balance <= 0) {
-    alert('You\'re out of money! Resetting to $10,000');
-    balance = 10000;
-    document.getElementById('balance').textContent = balance.toLocaleString();
+  if (stanKonta <= 0) {
+    alert('Skończyły ci się pieniądze! Resetujemy do 10 000 PLN');
+    stanKonta = 10000;
+    document.getElementById('stan-konta').textContent = stanKonta.toLocaleString();
   }
 }
 
-function showGame(game) {
-  // Hide all games
-  document.querySelectorAll('.game-container').forEach(container => {
-    container.classList.add('hidden');
-  });
+// LOGIKA AUTOMATÓW
+function kręćAutomaty() {
+  const stawka = parseInt(document.getElementById('stawka-automat').value);
   
-  // Show selected game
-  document.getElementById(game + '-game').classList.remove('hidden');
-  currentGame = game;
-  
-  // Reset game states
-  if (game === 'blackjack') {
-    resetBlackjack();
-  }
-  if (game === 'roulette') {
-    resetRoulette();
-  }
-}
-
-// SLOT MACHINE LOGIC
-function spinSlots() {
-  const betAmount = parseInt(document.getElementById('slot-bet').value);
-  
-  if (balance < betAmount) {
-    alert('Insufficient funds!');
+  if (stanKonta < stawka) {
+    alert('Niewystarczające środki!');
     return;
   }
   
-  updateBalance(-betAmount);
+  aktualizujStanKonta(-stawka);
   
-  // Animate slots
-  const slots = ['slot1', 'slot2', 'slot3'];
-  const results = [];
+  // Animacja automatów
+  const automaty = ['automat1', 'automat2', 'automat3'];
+  const wyniki = [];
   
-  slots.forEach((slotId, index) => {
-    const slot = document.getElementById(slotId);
-    slot.classList.add('slot-reel');
+  automaty.forEach((idAutomat, index) => {
+    const automat = document.getElementById(idAutomat);
+    automat.classList.add('slot-reel');
     
     setTimeout(() => {
-      const symbol = slotSymbols[Math.floor(Math.random() * slotSymbols.length)];
-      slot.textContent = symbol;
-      results.push(symbol);
-      slot.classList.remove('slot-reel');
+      const symbol = symboleAutomatow[Math.floor(Math.random() * symboleAutomatow.length)];
+      automat.textContent = symbol;
+      wyniki.push(symbol);
+      automat.classList.remove('slot-reel');
       
       if (index === 2) {
-        checkSlotWin(results, betAmount);
+        sprawdzWynikAutomatow(wyniki, stawka);
       }
     }, 500 + (index * 200));
   });
 }
 
-function checkSlotWin(results, betAmount) {
-  const resultDiv = document.getElementById('slot-result');
+function sprawdzWynikAutomatow(wyniki, stawka) {
+  const wynikDiv = document.getElementById('wynik-automat');
   
-  // Check for wins
-  if (results[0] === results[1] && results[1] === results[2]) {
-    // Three of a kind
-    let multiplier = 5;
-    if (results[0] === '💎') multiplier = 20;
-    else if (results[0] === '7️⃣') multiplier = 15;
-    else if (results[0] === '🔔') multiplier = 10;
+  // Sprawdź wygrane
+  if (wyniki[0] === wyniki[1] && wyniki[1] === wyniki[2]) {
+    // Trzy takie same
+    let mnoznik = 5;
+    if (wyniki[0] === '💎') mnoznik = 20;
+    else if (wyniki[0] === '7️⃣') mnoznik = 15;
+    else if (wyniki[0] === '🔔') mnoznik = 10;
     
-    const winAmount = betAmount * multiplier;
-    updateBalance(winAmount);
-    resultDiv.innerHTML = `<span class="text-green-400">🎉 JACKPOT! Won $${winAmount}! 🎉</span>`;
-  } else if (results[0] === results[1] || results[1] === results[2] || results[0] === results[2]) {
-    // Two of a kind
-    const winAmount = betAmount * 2;
-    updateBalance(winAmount);
-    resultDiv.innerHTML = `<span class="text-yellow-400">✨ Two of a kind! Won $${winAmount}! ✨</span>`;
+    const wygrana = stawka * mnoznik;
+    aktualizujStanKonta(wygrana);
+    wynikDiv.innerHTML = `<span class="text-green-400 win-glow">🎉 JACKPOT! Wygrałeś ${wygrana} PLN! 🎉</span>`;
+  } else if (wyniki[0] === wyniki[1] || wyniki[1] === wyniki[2] || wyniki[0] === wyniki[2]) {
+    // Dwa takie same
+    const wygrana = stawka * 2;
+    aktualizujStanKonta(wygrana);
+    wynikDiv.innerHTML = `<span class="text-yellow-400">✨ Dwa takie same! Wygrałeś ${wygrana} PLN! ✨</span>`;
   } else {
-    resultDiv.innerHTML = `<span class="text-red-400">💸 No win this time. Try again! 💸</span>`;
+    wynikDiv.innerHTML = `<span class="text-red-400">💸 Tym razem bez wygranej. Spróbuj jeszcze raz! 💸</span>`;
   }
   
   setTimeout(() => {
-    resultDiv.innerHTML = '';
+    wynikDiv.innerHTML = '';
   }, 3000);
 }
 
-// BLACKJACK LOGIC
-function createDeck() {
-  const suits = ['♠️', '♥️', '♦️', '♣️'];
-  const ranks = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
-  deck = [];
+// LOGIKA BLACKJACKA
+function utworzTalii() {
+  const kolory = ['♠️', '♥️', '♦️', '♣️'];
+  const figury = ['A', '2', '3', '4', '5', '6', '7', '8', '9', '10', 'J', 'Q', 'K'];
+  talia = [];
   
-  for (let suit of suits) {
-    for (let rank of ranks) {
-      deck.push({ rank, suit, value: getCardValue(rank) });
+  for (let kolor of kolory) {
+    for (let figura of figury) {
+      talia.push({ figura, kolor, wartosc: pobierzWartoscKarty(figura) });
     }
   }
   
-  // Shuffle deck
-  for (let i = deck.length - 1; i > 0; i--) {
+  // Tasuj talię
+  for (let i = talia.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1));
-    [deck[i], deck[j]] = [deck[j], deck[i]];
+    [talia[i], talia[j]] = [talia[j], talia[i]];
   }
 }
 
-function getCardValue(rank) {
-  if (rank === 'A') return 11;
-  if (['J', 'Q', 'K'].includes(rank)) return 10;
-  return parseInt(rank);
+function pobierzWartoscKarty(figura) {
+  if (figura === 'A') return 11;
+  if (['J', 'Q', 'K'].includes(figura)) return 10;
+  return parseInt(figura);
 }
 
-function dealCard() {
-  return deck.pop();
+function dobierzKartę() {
+  return talia.pop();
 }
 
-function calculateScore(hand) {
-  let score = 0;
-  let aces = 0;
+function obliczPunkty(reka) {
+  let punkty = 0;
+  let asy = 0;
   
-  for (let card of hand) {
-    score += card.value;
-    if (card.rank === 'A') aces++;
+  for (let karta of reka) {
+    punkty += karta.wartosc;
+    if (karta.figura === 'A') asy++;
   }
   
-  // Adjust for aces
-  while (score > 21 && aces > 0) {
-    score -= 10;
-    aces--;
+  // Dostosuj dla asów
+  while (punkty > 21 && asy > 0) {
+    punkty -= 10;
+    asy--;
   }
   
-  return score;
+  return punkty;
 }
 
-function displayCard(card, container) {
-  const cardDiv = document.createElement('div');
-  cardDiv.className = 'w-16 h-24 bg-white rounded border-2 border-gray-300 flex flex-col items-center justify-center text-black font-bold card-flip';
-  cardDiv.innerHTML = `
-    <div class="text-xs">${card.rank}</div>
-    <div class="text-lg">${card.suit}</div>
+function wyswietlKarte(karta, kontener) {
+  const kartaDiv = document.createElement('div');
+  kartaDiv.className = 'w-16 h-24 bg-white rounded border-2 border-gray-300 flex flex-col items-center justify-center text-black font-bold card-flip';
+  kartaDiv.innerHTML = `
+    <div class="text-xs">${karta.figura}</div>
+    <div class="text-lg">${karta.kolor}</div>
   `;
-  container.appendChild(cardDiv);
+  kontener.appendChild(kartaDiv);
 }
 
-function startBlackjack() {
-  const betAmount = parseInt(document.getElementById('blackjack-bet').value);
+function rozpocznijGre() {
+  const stawka = parseInt(document.getElementById('stawka-blackjack').value);
   
-  if (balance < betAmount) {
-    alert('Insufficient funds!');
+  if (stanKonta < stawka) {
+    alert('Niewystarczające środki!');
     return;
   }
   
-  updateBalance(-betAmount);
-  currentBet = betAmount;
+  aktualizujStanKonta(-stawka);
+  aktualnaStawka = stawka;
   
-  createDeck();
-  playerHand = [];
-  dealerHand = [];
-  gameInProgress = true;
+  utworzTalii();
+  kartyGracza = [];
+  kartyKrupiera = [];
+  graWToku = true;
   
-  // Clear previous cards
-  document.getElementById('player-cards').innerHTML = '';
-  document.getElementById('dealer-cards').innerHTML = '';
-  document.getElementById('blackjack-result').innerHTML = '';
+  // Wyczyść poprzednie karty
+  document.getElementById('karty-gracz').innerHTML = '';
+  document.getElementById('karty-krupier').innerHTML = '';
+  document.getElementById('wynik-blackjack').innerHTML = '';
   
-  // Deal initial cards
-  playerHand.push(dealCard());
-  dealerHand.push(dealCard());
-  playerHand.push(dealCard());
-  dealerHand.push(dealCard());
+  // Rozdaj początkowe karty
+  kartyGracza.push(dobierzKartę());
+  kartyKrupiera.push(dobierzKartę());
+  kartyGracza.push(dobierzKartę());
+  kartyKrupiera.push(dobierzKartę());
   
-  updateBlackjackDisplay();
+  aktualizujWidokBlackjacka();
   
-  // Enable/disable buttons
-  document.getElementById('deal-btn').disabled = true;
-  document.getElementById('hit-btn').disabled = false;
-  document.getElementById('stand-btn').disabled = false;
+  // Włącz/wyłącz przyciski
+  document.getElementById('rozpocznij-btn').disabled = true;
+  document.getElementById('dobierz-btn').disabled = false;
+  document.getElementById('pas-btn').disabled = false;
   
-  // Check for blackjack
-  if (calculateScore(playerHand) === 21) {
-    stand();
+  // Sprawdź blackjacka
+  if (obliczPunkty(kartyGracza) === 21) {
+    pas();
   }
 }
 
-function hit() {
-  if (!gameInProgress) return;
+function dobierzKarte() {
+  if (!graWToku) return;
   
-  playerHand.push(dealCard());
-  updateBlackjackDisplay();
+  kartyGracza.push(dobierzKartę());
+  aktualizujWidokBlackjacka();
   
-  if (calculateScore(playerHand) > 21) {
-    endBlackjack('bust');
+  if (obliczPunkty(kartyGracza) > 21) {
+    zakonczGre('przegrana');
   }
 }
 
-function stand() {
-  if (!gameInProgress) return;
+function pas() {
+  if (!graWToku) return;
   
-  // Dealer plays
-  while (calculateScore(dealerHand) < 17) {
-    dealerHand.push(dealCard());
+  // Krupier dobiera karty
+  while (obliczPunkty(kartyKrupiera) < 17) {
+    kartyKrupiera.push(dobierzKartę());
   }
   
-  updateBlackjackDisplay();
+  aktualizujWidokBlackjacka();
   
-  const playerScore = calculateScore(playerHand);
-  const dealerScore = calculateScore(dealerHand);
+  const punktyGracza = obliczPunkty(kartyGracza);
+  const punktyKrupiera = obliczPunkty(kartyKrupiera);
   
-  if (dealerScore > 21) {
-    endBlackjack('dealer-bust');
-  } else if (playerScore > dealerScore) {
-    endBlackjack('player-win');
-  } else if (dealerScore > playerScore) {
-    endBlackjack('dealer-win');
+  if (punktyKrupiera > 21) {
+    zakonczGre('wygrana-krupier-przegral');
+  } else if (punktyGracza > punktyKrupiera) {
+    zakonczGre('wygrana-gracz');
+  } else if (punktyKrupiera > punktyGracza) {
+    zakonczGre('wygrana-krupier');
   } else {
-    endBlackjack('tie');
+    zakonczGre('remis');
   }
 }
 
-function updateBlackjackDisplay() {
-  const playerContainer = document.getElementById('player-cards');
-  const dealerContainer = document.getElementById('dealer-cards');
+function aktualizujWidokBlackjacka() {
+  const kontenerGracza = document.getElementById('karty-gracz');
+  const kontenerKrupiera = document.getElementById('karty-krupier');
   
-  // Clear and redisplay cards
-  playerContainer.innerHTML = '';
-  dealerContainer.innerHTML = '';
+  // Wyczyść i ponownie wyświetl karty
+  kontenerGracza.innerHTML = '';
+  kontenerKrupiera.innerHTML = '';
   
-  playerHand.forEach(card => displayCard(card, playerContainer));
-  dealerHand.forEach((card, index) => {
-    if (gameInProgress && index === 1) {
-      // Hide dealer's second card during game
-      const hiddenCard = document.createElement('div');
-      hiddenCard.className = 'w-16 h-24 bg-blue-600 rounded border-2 border-gray-300 flex items-center justify-center text-white font-bold';
-      hiddenCard.innerHTML = '🂠';
-      dealerContainer.appendChild(hiddenCard);
+  kartyGracza.forEach(karta => wyswietlKarte(karta, kontenerGracza));
+  kartyKrupiera.forEach((karta, index) => {
+    if (graWToku && index === 1) {
+      // Ukryj drugą kartę krupiera podczas gry
+      const ukrytaKarta = document.createElement('div');
+      ukrytaKarta.className = 'w-16 h-24 bg-blue-600 rounded border-2 border-gray-300 flex items-center justify-center text-white font-bold';
+      ukrytaKarta.innerHTML = '🂠';
+      kontenerKrupiera.appendChild(ukrytaKarta);
     } else {
-      displayCard(card, dealerContainer);
+      wyswietlKarte(karta, kontenerKrupiera);
     }
   });
   
-  document.getElementById('player-score').textContent = calculateScore(playerHand);
-  document.getElementById('dealer-score').textContent = gameInProgress ? calculateScore([dealerHand[0]]) : calculateScore(dealerHand);
+  document.getElementById('punkty-gracz').textContent = obliczPunkty(kartyGracza);
+  document.getElementById('punkty-krupier').textContent = graWToku ? obliczPunkty([kartyKrupiera[0]]) : obliczPunkty(kartyKrupiera);
 }
 
-function endBlackjack(result) {
-  gameInProgress = false;
-  updateBlackjackDisplay();
+function zakonczGre(wynik) {
+  graWToku = false;
+  aktualizujWidokBlackjacka();
   
-  const resultDiv = document.getElementById('blackjack-result');
+  const wynikDiv = document.getElementById('wynik-blackjack');
   
-  switch (result) {
-    case 'bust':
-      resultDiv.innerHTML = '<span class="text-red-400">💥 BUST! You lose! 💥</span>';
+  switch (wynik) {
+    case 'przegrana':
+      wynikDiv.innerHTML = '<span class="text-red-400">💥 Przegrałeś! 💥</span>';
       break;
-    case 'dealer-bust':
-      updateBalance(currentBet * 2);
-      resultDiv.innerHTML = '<span class="text-green-400">🎉 Dealer busts! You win! 🎉</span>';
+    case 'wygrana-krupier-przegral':
+      aktualizujStanKonta(aktualnaStawka * 2);
+      wynikDiv.innerHTML = '<span class="text-green-400">🎉 Krupier przegrał! Wygrałeś! 🎉</span>';
       break;
-    case 'player-win':
-      updateBalance(currentBet * 2);
-      resultDiv.innerHTML = '<span class="text-green-400">🎉 You win! 🎉</span>';
+    case 'wygrana-gracz':
+      aktualizujStanKonta(aktualnaStawka * 2);
+      wynikDiv.innerHTML = '<span class="text-green-400">🎉 Wygrałeś! 🎉</span>';
       break;
-    case 'dealer-win':
-      resultDiv.innerHTML = '<span class="text-red-400">😞 Dealer wins! 😞</span>';
+    case 'wygrana-krupier':
+      wynikDiv.innerHTML = '<span class="text-red-400">😞 Krupier wygrał! 😞</span>';
       break;
-    case 'tie':
-      updateBalance(currentBet);
-      resultDiv.innerHTML = '<span class="text-yellow-400">🤝 It\'s a tie! 🤝</span>';
+    case 'remis':
+      aktualizujStanKonta(aktualnaStawka);
+      wynikDiv.innerHTML = '<span class="text-yellow-400">🤝 Remis! 🤝</span>';
       break;
   }
   
-  resetBlackjack();
+  zresetujBlackjacka();
 }
 
-function resetBlackjack() {
-  document.getElementById('deal-btn').disabled = false;
-  document.getElementById('hit-btn').disabled = true;
-  document.getElementById('stand-btn').disabled = true;
+function zresetujBlackjacka() {
+  document.getElementById('rozpocznij-btn').disabled = false;
+  document.getElementById('dobierz-btn').disabled = true;
+  document.getElementById('pas-btn').disabled = true;
 }
-
-// ROULETTE LOGIC
-function placeBet(betType) {
-  rouletteBet = betType;
-  document.getElementById('current-bet').textContent = betType.toUpperCase();
-  document.getElementById('spin-roulette').disabled = false;
-}
-
-function spinRoulette() {
-  const betAmount = parseInt(document.getElementById('roulette-bet').value);
-  
-  if (balance < betAmount) {
-    alert('Insufficient funds!');
-    return;
-  }
-  
-  if (!rouletteBet) {
-    alert('Please place a bet first!');
-    return;
-  }
-  
-  updateBalance(-betAmount);
-  
-  // Animate wheel
-  const wheel = document.getElementById('roulette-wheel');
-  wheel.classList.add('roulette-wheel');
-  
-  setTimeout(() => {
-    const winningNumber = Math.floor(Math.random() * 37); // 0-36
-    document.getElementById('roulette-number').textContent = winningNumber;
-    
-    checkRouletteWin(winningNumber, betAmount);
-    wheel.classList.remove('roulette-wheel');
-  }, 3000);
-  
-  document.getElementById('spin-roulette').disabled = true;
-}
-
-function checkRouletteWin(number, betAmount) {
-  const resultDiv = document.getElementById('roulette-result');
-  let won = false;
-  let multiplier = 2;
-  
-  switch (rouletteBet) {
-    case 'red':
-      won = redNumbers.includes(number);
-      break;
-    case 'black':
-      won = !redNumbers.includes(number) && number !== 0;
-      break;
-    case 'even':
-      won = number % 2 === 0 && number !== 0;
-      break;
-    case 'odd':
-      won = number % 2 === 1;
-      break;
-  }
-  
-  if (won) {
-    const winAmount = betAmount * multiplier;
-    updateBalance(winAmount);
-    resultDiv.innerHTML = `<span class="text-green-400">🎉 Winner! Number ${number} - Won $${winAmount}! 🎉</span>`;
-  } else {
-    resultDiv.innerHTML = `<span class="text-red-400">💸 Number ${number} - Better luck next time! 💸</span>`;
-  }
-  
-  setTimeout(() => {
-    resultDiv.innerHTML = '';
-    resetRoulette();
-  }, 3000);
-}
-
-function resetRoulette() {
-  rouletteBet = null;
-  document.getElementById('current-bet').textContent = 'None';
-  document.getElementById('spin-roulette').disabled = true;
-}
-
-// Initialize
-document.addEventListener('DOMContentLoaded', function() {
-  showGame('slots');
-});
