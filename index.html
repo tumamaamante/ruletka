@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Lucky Casino - Play with Fake Money</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+  <style>
+    body {
+      font-family: 'Orbitron', monospace;
+    }
+    .slot-reel {
+      animation: spin 0.5s ease-in-out;
+    }
+    @keyframes spin {
+      0% { transform: translateY(-100px); opacity: 0; }
+      100% { transform: translateY(0); opacity: 1; }
+    }
+    .card-flip {
+      animation: flip 0.6s ease-in-out;
+    }
+    @keyframes flip {
+      0% { transform: rotateY(0deg); }
+      50% { transform: rotateY(90deg); }
+      100% { transform: rotateY(0deg); }
+    }
+    .roulette-wheel {
+      animation: roulette-spin 3s ease-out;
+    }
+    @keyframes roulette-spin {
+      0% { transform: rotate(0deg); }
+      100% { transform: rotate(1800deg); }
+    }
+  </style>
+</head>
+<body class="bg-gradient-to-br from-purple-900 via-red-900 to-yellow-900 min-h-screen">
+  <!-- Header -->
+  <header class="bg-black bg-opacity-50 p-4 text-center">
+    <h1 class="text-4xl font-bold text-yellow-400 mb-2">🎰 LUCKY CASINO 🎰</h1>
+    <div class="text-xl text-white">
+      Balance: $<span id="balance" class="text-green-400 font-bold">10000</span>
+    </div>
+  </header>
+
+  <!-- Game Selection -->
+  <div class="container mx-auto p-6">
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+      <button onclick="showGame('slots')" class="bg-gradient-to-r from-red-600 to-red-800 hover:from-red-700 hover:to-red-900 text-white font-bold py-4 px-6 rounded-lg transform hover:scale-105 transition-all">
+        🎰 SLOT MACHINE
+      </button>
+      <button onclick="showGame('blackjack')" class="bg-gradient-to-r from-green-600 to-green-800 hover:from-green-700 hover:to-green-900 text-white font-bold py-4 px-6 rounded-lg transform hover:scale-105 transition-all">
+        🃏 BLACKJACK
+      </button>
+      <button onclick="showGame('roulette')" class="bg-gradient-to-r from-blue-600 to-blue-800 hover:from-blue-700 hover:to-blue-900 text-white font-bold py-4 px-6 rounded-lg transform hover:scale-105 transition-all">
+        🎯 ROULETTE
+      </button>
+    </div>
+
+    <!-- Slot Machine Game -->
+    <div id="slots-game" class="game-container bg-black bg-opacity-70 rounded-lg p-6 hidden">
+      <h2 class="text-3xl font-bold text-yellow-400 text-center mb-6">🎰 SLOT MACHINE 🎰</h2>
+      
+      <div class="flex justify-center mb-6">
+        <div class="bg-yellow-600 p-4 rounded-lg">
+          <div class="grid grid-cols-3 gap-2">
+            <div id="slot1" class="w-20 h-20 bg-white rounded flex items-center justify-center text-4xl slot-reel">🍒</div>
+            <div id="slot2" class="w-20 h-20 bg-white rounded flex items-center justify-center text-4xl slot-reel">🍋</div>
+            <div id="slot3" class="w-20 h-20 bg-white rounded flex items-center justify-center text-4xl slot-reel">🍊</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="text-center mb-4">
+        <div class="mb-4">
+          <label class="text-white mr-2">Bet Amount:</label>
+          <select id="slot-bet" class="bg-gray-800 text-white p-2 rounded">
+            <option value="10">$10</option>
+            <option value="25">$25</option>
+            <option value="50">$50</option>
+            <option value="100">$100</option>
+          </select>
+        </div>
+        <button onclick="spinSlots()" class="bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-3 px-8 rounded-lg text-xl">
+          SPIN! 🎰
+        </button>
+      </div>
+
+      <div id="slot-result" class="text-center text-xl font-bold"></div>
+    </div>
+
+    <!-- Blackjack Game -->
+    <div id="blackjack-game" class="game-container bg-black bg-opacity-70 rounded-lg p-6 hidden">
+      <h2 class="text-3xl font-bold text-green-400 text-center mb-6">🃏 BLACKJACK 🃏</h2>
+      
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+        <div class="text-center">
+          <h3 class="text-xl text-white mb-2">Dealer (Score: <span id="dealer-score">0</span>)</h3>
+          <div id="dealer-cards" class="flex justify-center space-x-2 mb-4 min-h-[100px]"></div>
+        </div>
+        <div class="text-center">
+          <h3 class="text-xl text-white mb-2">Player (Score: <span id="player-score">0</span>)</h3>
+          <div id="player-cards" class="flex justify-center space-x-2 mb-4 min-h-[100px]"></div>
+        </div>
+      </div>
+
+      <div class="text-center mb-4">
+        <div class="mb-4">
+          <label class="text-white mr-2">Bet Amount:</label>
+          <select id="blackjack-bet" class="bg-gray-800 text-white p-2 rounded">
+            <option value="10">$10</option>
+            <option value="25">$25</option>
+            <option value="50">$50</option>
+            <option value="100">$100</option>
+          </select>
+        </div>
+        <div class="space-x-4">
+          <button onclick="startBlackjack()" id="deal-btn" class="bg-green-600 hover:bg-green-700 text-white font-bold py-2 px-6 rounded">
+            DEAL
+          </button>
+          <button onclick="hit()" id="hit-btn" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-6 rounded" disabled>
+            HIT
+          </button>
+          <button onclick="stand()" id="stand-btn" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-6 rounded" disabled>
+            STAND
+          </button>
+        </div>
+      </div>
+
+      <div id="blackjack-result" class="text-center text-xl font-bold"></div>
+    </div>
+
+    <!-- Roulette Game -->
+    <div id="roulette-game" class="game-container bg-black bg-opacity-70 rounded-lg p-6 hidden">
+      <h2 class="text-3xl font-bold text-blue-400 text-center mb-6">🎯 ROULETTE 🎯</h2>
+      
+      <div class="flex justify-center mb-6">
+        <div class="relative">
+          <div id="roulette-wheel" class="w-48 h-48 rounded-full bg-gradient-to-r from-red-600 via-black to-red-600 flex items-center justify-center text-white text-6xl font-bold border-8 border-yellow-400">
+            <span id="roulette-number">0</span>
+          </div>
+          <div class="absolute top-0 left-1/2 transform -translate-x-1/2 -translate-y-2 text-yellow-400 text-2xl">▼</div>
+        </div>
+      </div>
+
+      <div class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <button onclick="placeBet('red')" class="bg-red-600 hover:bg-red-700 text-white font-bold py-2 px-4 rounded">
+          RED
+        </button>
+        <button onclick="placeBet('black')" class="bg-gray-800 hover:bg-gray-900 text-white font-bold py-2 px-4 rounded">
+          BLACK
+        </button>
+        <button onclick="placeBet('even')" class="bg-blue-600 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded">
+          EVEN
+        </button>
+        <button onclick="placeBet('odd')" class="bg-purple-600 hover:bg-purple-700 text-white font-bold py-2 px-4 rounded">
+          ODD
+        </button>
+      </div>
+
+      <div class="text-center mb-4">
+        <div class="mb-4">
+          <label class="text-white mr-2">Bet Amount:</label>
+          <select id="roulette-bet" class="bg-gray-800 text-white p-2 rounded">
+            <option value="10">$10</option>
+            <option value="25">$25</option>
+            <option value="50">$50</option>
+            <option value="100">$100</option>
+          </select>
+        </div>
+        <div class="text-white mb-2">Current Bet: <span id="current-bet">None</span></div>
+        <button onclick="spinRoulette()" id="spin-roulette" class="bg-yellow-600 hover:bg-yellow-700 text-black font-bold py-3 px-8 rounded-lg text-xl" disabled>
+          SPIN! 🎯
+        </button>
+      </div>
+
+      <div id="roulette-result" class="text-center text-xl font-bold"></div>
+    </div>
+  </div>
+
+  <script src="casino.js"></script>
+</body>
+</html>
